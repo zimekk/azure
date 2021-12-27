@@ -9,6 +9,8 @@ node -v
 # v12.22.6
 npm -v
 # 8.3.0
+yarn -v
+# 1.22.17
 ```
 
 ## create project
