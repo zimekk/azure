@@ -41,6 +41,12 @@ git commit -m "chore: initial commit"
 pulumi up
 ```
 
+## output
+
+```sh
+pulumi stack output --show-secrets
+```
+
 ## destroy resources
 
 ```sh

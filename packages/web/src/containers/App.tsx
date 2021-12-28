@@ -43,6 +43,12 @@ function App() {
           <li>
             <a href={`api/profile`}>api/profile</a>
           </li>
+          <li>
+            <a href={`api/secure`}>api/secure</a>
+          </li>
+          <li>
+            <a href={`api/auth`}>api/auth</a>
+          </li>
         </ul>
       </nav>
     </section>
