@@ -13,12 +13,12 @@
     ]
   },
   "scripts": {
-    "build": "npm --workspaces run build",
+    "build": "yarn workspaces run build",
     "clean": "rm -rf packages/*/public packages/*/lib",
     "lint": "eslint . --ext .json,.js,.jsx,.ts,.tsx",
     "reset": "rm -rf node_modules packages/*/node_modules",
-    "serve": "npm --workspace @dev/app serve",
-    "start": "npm --workspace @dev/app start",
+    "serve": "yarn workspace @dev/app serve",
+    "start": "yarn workspace @dev/app start",
     "dedupe": "yarn-deduplicate && yarn",
     "dedupe:list": "yarn-deduplicate --list",
     "update": "yarn upgrade-interactive",
@@ -31,6 +31,7 @@
   "dependencies": {
     "@pulumi/azure-native": "^1.0.0",
     "@pulumi/azuread": "^5.12.0",
+    "@pulumi/docker": "^3.1.0",
     "@pulumi/pulumi": "^3.0.0"
   },
   "devDependencies": {

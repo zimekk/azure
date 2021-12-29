@@ -1,8 +1,5 @@
 import path from "path";
 import webpack from "webpack";
-import env from "dotenv";
-
-env.config({ path: path.resolve(__dirname, "../../.env") });
 
 export default (env, { mode }, dev = mode === "development") => ({
   target: "web",

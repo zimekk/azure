@@ -13,10 +13,28 @@ yarn -v
 # 1.22.17
 ```
 
+## install
+
+```sh
+brew install azure-cli
+brew install pulumi
+```
+
+## azure
+
+```sh
+az login --use-device-code
+az account show
+```
+
 ## create project
 
 ```sh
+pulumi login --local
+pulumi stack init dev
+pulumi config set azure-native:location westeurope
 pulumi new azure-typescript -f -y
+pulumi stack
 export PULUMI_CONFIG_PASSPHRASE=...
 ```
 
@@ -51,4 +69,5 @@ pulumi stack output --show-secrets
 
 ```sh
 pulumi destroy
+pulumi stack rm
 ```

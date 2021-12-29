@@ -1,0 +1,21 @@
+version: "3"
+services:
+  app:
+    build: .
+    environment:
+      - PORT
+      - VAPID_PUBLIC_KEY
+      - VAPID_PRIVATE_KEY
+      - SMTP_URL
+      - MAIL_FROM
+      - MAIL_TO
+      - API_KEY
+      - API_URL
+      - AZURE_APP_ID
+      - AZURE_AUTHORITY
+      - AZURE_CLIENT_SECRET
+      - REDIRECT_URI
+    ports:
+      - $PORT:$PORT
+    volumes:
+      - /app/node_modules

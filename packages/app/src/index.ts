@@ -1,5 +1,8 @@
 import path from "path";
-import express, { Router, json } from "express";
+import express, { Router } from "express";
+import env from "dotenv";
+
+env.config({ path: path.resolve(__dirname, "../../.env") });
 
 export const router = Router()
   .use("/api", require("@dev/api").default())
@@ -154,7 +157,7 @@ if (process.mainModule.filename === __filename) {
   const middleware = router;
 
   const server = new Server({
-    port: 8080,
+    port: process.env.PORT,
     static: [defaultOptionsForStatic],
     onBeforeSetupMiddleware: async function (devServer) {
       if (!devServer) {
