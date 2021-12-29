@@ -5,14 +5,18 @@ import * as azuread from "@pulumi/azuread";
 import * as containerinstance from "@pulumi/azure-native/containerinstance";
 import * as containerregistry from "@pulumi/azure-native/containerregistry";
 import * as resources from "@pulumi/azure-native/resources";
-import * as storage from "@pulumi/azure-native/storage";
-import * as web from "@pulumi/azure-native/web";
+// import * as storage from "@pulumi/azure-native/storage";
+// import * as web from "@pulumi/azure-native/web";
 
 import { config } from "dotenv";
+
+const port = 80;
 
 const env = config();
 
 export const clientConfig = azuread.getClientConfig();
+
+export const PORT = String(port);
 
 export const REDIRECT_URI = "http://localhost:8080/api/auth";
 
@@ -43,34 +47,34 @@ export const AZURE_CLIENT_SECRET = applicationPassword.value;
 // Create an Azure Resource Group
 const resourceGroup = new resources.ResourceGroup("resourceGroup");
 
-// Create an Azure resource (Storage Account)
-const storageAccount = new storage.StorageAccount("sa", {
-  resourceGroupName: resourceGroup.name,
-  sku: {
-    name: storage.SkuName.Standard_LRS,
-  },
-  kind: storage.Kind.StorageV2,
-});
+// // Create an Azure resource (Storage Account)
+// const storageAccount = new storage.StorageAccount("sa", {
+//   resourceGroupName: resourceGroup.name,
+//   sku: {
+//     name: storage.SkuName.Standard_LRS,
+//   },
+//   kind: storage.Kind.StorageV2,
+// });
 
-// Export the primary key of the Storage Account
-const storageAccountKeys = pulumi
-  .all([resourceGroup.name, storageAccount.name])
-  .apply(([resourceGroupName, accountName]) =>
-    storage.listStorageAccountKeys({ resourceGroupName, accountName })
-  );
+// // Export the primary key of the Storage Account
+// const storageAccountKeys = pulumi
+//   .all([resourceGroup.name, storageAccount.name])
+//   .apply(([resourceGroupName, accountName]) =>
+//     storage.listStorageAccountKeys({ resourceGroupName, accountName })
+//   );
 
-export const primaryStorageKey = storageAccountKeys.keys[0].value;
+// export const primaryStorageKey = storageAccountKeys.keys[0].value;
 
 // https://github.com/pulumi/examples/blob/master/azure-ts-appservice-docker/index.ts
-const plan = new web.AppServicePlan("plan", {
-  resourceGroupName: resourceGroup.name,
-  kind: "Linux",
-  reserved: true,
-  sku: {
-    name: "B1",
-    tier: "Basic",
-  },
-});
+// const plan = new web.AppServicePlan("plan", {
+//   resourceGroupName: resourceGroup.name,
+//   kind: "Linux",
+//   reserved: true,
+//   sku: {
+//     name: "B1",
+//     tier: "Basic",
+//   },
+// });
 
 const customImage = "node-app";
 const registry = new containerregistry.Registry("registry", {
@@ -93,7 +97,7 @@ const adminPassword = credentials.apply(
 
 const myImage = new docker.Image(customImage, {
   imageName: pulumi.interpolate`${registry.loginServer}/${customImage}:v1.0.0`,
-  build: { context: ".", env: env.parsed },
+  build: { context: ".", env: { PORT } },
   registry: {
     server: registry.loginServer,
     username: adminUsername,
@@ -101,43 +105,42 @@ const myImage = new docker.Image(customImage, {
   },
 });
 
-const getStartedApp = new web.WebApp("getStartedApp", {
-  resourceGroupName: resourceGroup.name,
-  serverFarmId: plan.id,
-  siteConfig: {
-    appSettings: [
-      {
-        name: "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
-        value: "false",
-      },
-      {
-        name: "DOCKER_REGISTRY_SERVER_URL",
-        value: pulumi.interpolate`https://${registry.loginServer}`,
-      },
-      {
-        name: "DOCKER_REGISTRY_SERVER_USERNAME",
-        value: adminUsername,
-      },
-      {
-        name: "DOCKER_REGISTRY_SERVER_PASSWORD",
-        value: adminPassword,
-      },
-      {
-        name: "WEBSITES_PORT",
-        value: "8080", // Our custom image exposes port 80. Adjust for your app as needed.
-      },
-    ],
-    alwaysOn: true,
-    linuxFxVersion: pulumi.interpolate`DOCKER|${myImage.imageName}`,
-  },
-  httpsOnly: true,
-});
+// const getStartedApp = new web.WebApp("getStartedApp", {
+//   resourceGroupName: resourceGroup.name,
+//   serverFarmId: plan.id,
+//   siteConfig: {
+//     appSettings: [
+//       {
+//         name: "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+//         value: "false",
+//       },
+//       {
+//         name: "DOCKER_REGISTRY_SERVER_URL",
+//         value: pulumi.interpolate`https://${registry.loginServer}`,
+//       },
+//       {
+//         name: "DOCKER_REGISTRY_SERVER_USERNAME",
+//         value: adminUsername,
+//       },
+//       {
+//         name: "DOCKER_REGISTRY_SERVER_PASSWORD",
+//         value: adminPassword,
+//       },
+//       {
+//         name: "WEBSITES_PORT",
+//         value: "8080", // Our custom image exposes port 80. Adjust for your app as needed.
+//       },
+//     ],
+//     alwaysOn: true,
+//     linuxFxVersion: pulumi.interpolate`DOCKER|${myImage.imageName}`,
+//   },
+//   httpsOnly: true,
+// });
 
-export const getStartedEndpoint = pulumi.interpolate`https://${getStartedApp.defaultHostName}`;
+// export const getStartedEndpoint = pulumi.interpolate`https://${getStartedApp.defaultHostName}`;
 
 // https://www.pulumi.com/registry/packages/azure-native/how-to-guides/azure-ts-aci/
-// https://github.com/pulumi/examples/blob/master/azure-ts-aci/index.ts
-const imageName = "mcr.microsoft.com/azuredocs/aci-helloworld";
+const imageName = myImage.imageName;
 const containerGroup = new containerinstance.ContainerGroup("containerGroup", {
   resourceGroupName: resourceGroup.name,
   osType: "Linux",
@@ -145,7 +148,14 @@ const containerGroup = new containerinstance.ContainerGroup("containerGroup", {
     {
       name: "acilinuxpublicipcontainergroup",
       image: imageName,
-      ports: [{ port: 80 }],
+      environmentVariables: Object.entries({
+        ...env.parsed,
+        PORT,
+        AZURE_APP_ID,
+        AZURE_AUTHORITY,
+        AZURE_CLIENT_SECRET,
+      }).map(([name, value]) => ({ name, value })),
+      ports: [{ port }],
       resources: {
         requests: {
           cpu: 1.0,
@@ -154,10 +164,17 @@ const containerGroup = new containerinstance.ContainerGroup("containerGroup", {
       },
     },
   ],
+  imageRegistryCredentials: [
+    {
+      server: registry.loginServer,
+      username: adminUsername,
+      password: adminPassword,
+    },
+  ],
   ipAddress: {
     ports: [
       {
-        port: 80,
+        port,
         protocol: "Tcp",
       },
     ],
@@ -165,6 +182,36 @@ const containerGroup = new containerinstance.ContainerGroup("containerGroup", {
   },
   restartPolicy: "always",
 });
+
+// https://github.com/pulumi/examples/blob/master/azure-ts-aci/index.ts
+// const imageName = "mcr.microsoft.com/azuredocs/aci-helloworld";
+// const containerGroup = new containerinstance.ContainerGroup("containerGroup", {
+//   resourceGroupName: resourceGroup.name,
+//   osType: "Linux",
+//   containers: [
+//     {
+//       name: "acilinuxpublicipcontainergroup",
+//       image: imageName,
+//       ports: [{ port: 80 }],
+//       resources: {
+//         requests: {
+//           cpu: 1.0,
+//           memoryInGB: 1.5,
+//         },
+//       },
+//     },
+//   ],
+//   ipAddress: {
+//     ports: [
+//       {
+//         port: 80,
+//         protocol: "Tcp",
+//       },
+//     ],
+//     type: "Public",
+//   },
+//   restartPolicy: "always",
+// });
 
 export const containerIPv4Address = containerGroup.ipAddress.apply(
   (ip) => ip?.ip

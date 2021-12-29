@@ -20,6 +20,13 @@ brew install azure-cli
 brew install pulumi
 ```
 
+## upgrade
+
+```sh
+brew upgrade pulumi
+az upgrade
+```
+
 ## azure
 
 ```sh
@@ -63,6 +70,21 @@ pulumi up
 
 ```sh
 pulumi stack output --show-secrets
+```
+
+## exec
+
+```sh
+az container list
+az container exec --ids /subscriptions/... --exec-command sh
+netstat -ant
+```
+
+## fix pending operations
+
+```sh
+pulumi stack export > stack.json
+pulumi stack import --file stack.json
 ```
 
 ## destroy resources
