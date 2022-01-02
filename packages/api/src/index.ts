@@ -1,5 +1,5 @@
 import { Router, json } from "express";
-import fetch from "node-fetch";
+import fetch from "isomorphic-fetch";
 import * as msal from "@azure/msal-node";
 
 const {

@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.13",
-    "@types/node": "^17.0.5",
+    "@types/node": "^17.0.6",
     "isomorphic-style-loader": "^5.3.2",
     "require-from-string": "^2.0.2",
     "ts-node": "^10.4.0",
